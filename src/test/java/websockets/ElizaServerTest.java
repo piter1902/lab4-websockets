@@ -60,11 +60,9 @@ public class ElizaServerTest {
         ClientEndpointConfig configuration = ClientEndpointConfig.Builder.create().build();
         ClientManager client = ClientManager.createClient();
         client.connectToServer(new ElizaEndpointToComplete(list), configuration, new URI("ws://localhost:8025/websockets/eliza"));
-        synchronized (list) {
-            list.wait();
-        }
-        assertEquals(list.size(), 4);
-        assertEquals(list.get(3), "Please don't apologize.");
+        Thread.sleep(300);
+        assertEquals(5, list.size());
+        assertEquals("Please don't apologize.", list.get(3));
     }
 
 	@After
@@ -102,6 +100,7 @@ public class ElizaServerTest {
         public void onOpen(Session session, EndpointConfig config) {
 
             session.getAsyncRemote().sendText("Sorry");
+            session.getAsyncRemote().sendText("bye");
 
             session.addMessageHandler(new ElizaMessageHandlerToComplete());
         }
@@ -111,12 +110,6 @@ public class ElizaServerTest {
             @Override
             public void onMessage(String message) {
                 list.add(message);
-
-                if (list.size() == 4) {
-                    synchronized (list) {
-                        list.notifyAll();
-                    }
-                }
             }
         }
     }
